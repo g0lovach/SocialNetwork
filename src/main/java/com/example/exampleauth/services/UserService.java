@@ -2,6 +2,7 @@ package com.example.exampleauth.services;
 
 import com.example.exampleauth.config.exceptions.UserNotExist;
 import com.example.exampleauth.dtos.RegistrationUserDto;
+import com.example.exampleauth.enities.CustomUserDetails;
 import com.example.exampleauth.enities.User;
 import com.example.exampleauth.repositories.UserRepository;
 
@@ -53,10 +54,11 @@ public class UserService implements UserDetailsService {
         User user = findByUsername(username).orElseThrow(() -> new UsernameNotFoundException(
                 String.format("User '%s' not found", username)
         ));
-        return new org.springframework.security.core.userdetails.User(
+        return new CustomUserDetails(
                 user.getUsername(),
                 user.getPassword(),
-                user.getRoles().stream().map(role -> new SimpleGrantedAuthority(role.getName())).collect(Collectors.toList())
+                user.getRoles().stream().map(role -> new SimpleGrantedAuthority(role.getName())).collect(Collectors.toList()),
+                user.getId()
         );
     }
 

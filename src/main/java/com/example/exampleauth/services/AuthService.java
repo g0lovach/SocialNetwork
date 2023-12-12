@@ -5,6 +5,7 @@ import com.example.exampleauth.dtos.JwtRequest;
 import com.example.exampleauth.dtos.JwtResponse;
 import com.example.exampleauth.dtos.RegistrationUserDto;
 import com.example.exampleauth.dtos.UserDto;
+import com.example.exampleauth.enities.CustomUserDetails;
 import com.example.exampleauth.enities.User;
 import com.example.exampleauth.utils.JwtTokenUtils;
 import lombok.RequiredArgsConstructor;
@@ -13,7 +14,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RequestBody;
 
@@ -35,7 +35,7 @@ public class AuthService {
             return new ResponseEntity<>(new AppError(HttpStatus.UNAUTHORIZED.value(),
                     "Incorrect login or password"), HttpStatus.UNAUTHORIZED);
         }
-        UserDetails userDetails = userService.loadUserByUsername(authRequest.getUsername());
+        CustomUserDetails userDetails = (CustomUserDetails) userService.loadUserByUsername(authRequest.getUsername());
         String token = jwtTokenUtils.generateToken(userDetails);
         return ResponseEntity.ok(new JwtResponse(token));
     }

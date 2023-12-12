@@ -3,11 +3,11 @@ package com.example.exampleauth.services;
 import com.example.exampleauth.config.exceptions.FriendshipNotCreated;
 import com.example.exampleauth.config.exceptions.FriendshipNotExist;
 import com.example.exampleauth.enities.Friendship;
-import com.example.exampleauth.enities.User;
 import com.example.exampleauth.repositories.FriendshipRepository;
 import com.example.exampleauth.repositories.UserRepository;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.*;
@@ -27,18 +27,19 @@ public class FriendshipService {
         this.userRepository = userRepository;
     }
 
-    public Map<String, Long> getUserFriends(Long user_id){
-        List<Friendship> friendships = friendshipRepository.findUserFriendships(user_id);
+    public Map<String, Long> getUserFriends(Long userId){
+        List<Friendship> friendships = friendshipRepository.findUserFriendships(userId);
         Map<String, Long> friends = new HashMap<>();
          friendships.stream().flatMap(i-> Stream.of(i.getUserOne(), i.getUserTwo()))
-                .filter(i-> !Objects.equals(i.getId(), user_id)).forEach(i->friends.put(i.getUsername(),i.getId()));
+                .filter(i-> !Objects.equals(i.getId(), userId)).forEach(i->friends.put(i.getUsername(),i.getId()));
         return friends;
     }
 
     @Transactional
-    public void deleteFriend(Long userId, Long exFriendId){
-        if (friendshipRepository.existsById(userId)
-                && friendshipRepository.existsById(exFriendId)&&getUserFriends(userId).containsValue(exFriendId)) {
+    public void deleteFriend(Long exFriendId){
+        Long userId = (Long) SecurityContextHolder.getContext().getAuthentication().getDetails();
+        if (userRepository.existsById(userId)
+                && userRepository.existsById(exFriendId) && getUserFriends(userId).containsValue(exFriendId)) {
             friendshipRepository.deleteFriendship(userId, exFriendId);
             return;
         }
@@ -48,10 +49,11 @@ public class FriendshipService {
     }
 
     @Transactional
-    public void addFriend(Long userId, Long newFriendId) {
+    public void addFriend(Long newFriendId) {
+        Long userId = (Long) SecurityContextHolder.getContext().getAuthentication().getDetails();
 
-            if (friendshipRepository.existsById(userId)
-                    && friendshipRepository.existsById(newFriendId)
+            if (userRepository.existsById(userId)
+                    && userRepository.existsById(newFriendId)
                     && !getUserFriends(userId).containsValue(newFriendId)) {
 
                 friendshipRepository.save(new Friendship(userRepository.findById(userId).get(),

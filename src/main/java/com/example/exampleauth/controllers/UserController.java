@@ -11,49 +11,48 @@ import com.example.exampleauth.services.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
-import java.security.Principal;
 import java.util.Map;
 
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("user/")
 public class UserController {
+
+
     private final UserService userService;
     private final FriendshipService friendshipService;
 
 
 
-    @GetMapping("user/{id}/friends")
-    ResponseEntity<Map<String, Long>> getFriends(@PathVariable("id") Long id){
-        return new ResponseEntity<>(friendshipService.getUserFriends(id), HttpStatus.OK);
+    @GetMapping("/friends")
+    ResponseEntity<Map<String, Long>> getFriends(){
+        Long userId = (Long) SecurityContextHolder.getContext().getAuthentication().getDetails();
+        return new ResponseEntity<>(friendshipService.getUserFriends(userId), HttpStatus.OK);
     }
 
-    @DeleteMapping("user/{id}/friends/{exFriendId}")
-    ResponseEntity<HttpStatus> deleteFriend(@PathVariable("id") Long id, @PathVariable("exFriendId") Long exFriendId ){
-        friendshipService.deleteFriend(id, exFriendId);
+    @DeleteMapping("/friends/{exFriendId}")
+    ResponseEntity<HttpStatus> deleteFriend( @PathVariable("exFriendId") Long exFriendId ){
+        friendshipService.deleteFriend(exFriendId);
         return ResponseEntity.ok(HttpStatus.OK);
     }
 
 
 
-    @PostMapping("user/{id}/friends/{newFriendId}")
-    ResponseEntity<HttpStatus> addFriend(@PathVariable("id") Long id, @PathVariable("newFriendId") Long newFriendId ){
-        friendshipService.addFriend(id, newFriendId);
+    @PostMapping("/friends/{newFriendId}")
+    ResponseEntity<HttpStatus> addFriend( @PathVariable("newFriendId") Long newFriendId ){
+        friendshipService.addFriend(newFriendId);
         return ResponseEntity.ok(HttpStatus.OK);
 
     }
+
 
     @GetMapping("/info")
-    public UserDto userData(Principal principal) {
-        User user = userService.getUserByUsername(principal.getName());
-        return new UserDto(user.getId(), user.getUsername(),user.getEmail());
-    }
-
-    @GetMapping("/{id}/info")
-    public UserDto userInfo(@PathVariable("id") Long id) {
-        User user = userService.getUserById(id);
+    public UserDto userInfo() {
+        Long userId = (Long) SecurityContextHolder.getContext().getAuthentication().getDetails();
+        User user = userService.getUserById(userId);
         return new UserDto(user.getId(), user.getUsername(),user.getEmail());
     }
 
